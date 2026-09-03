@@ -93,7 +93,7 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
   "author": "frostime",
   "url": "https://github.com/frostime/plugin-sample-vite",
   "version": "0.4.1",
-  "minAppVersion": "3.7.0",
+  "minAppVersion": "3.8.0",
   "disabledInPublish": true,
   "backends": ["windows", "linux", "darwin"],
   "frontends": ["desktop"],

@@ -97,7 +97,7 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
   "name": "plugin-sample-vite",
   "author": "frostime",
   "url": "https://github.com/frostime/plugin-sample-vite",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "minAppVersion": "3.8.0",
   "disabledInPublish": true,
   "backends": ["windows", "linux", "darwin"],
@@ -220,8 +220,8 @@ PR 社区集市仓库。
 2. 更新 `package.json` 和 `plugin.json` 中的版本号，然后推送匹配的 tag：
 
     ```bash
-    git tag v0.4.1
-    git push origin v0.4.1
+    git tag v0.5.0
+    git push origin v0.5.0
     ```
 
     workflow 会在检查、构建和发布前验证 tag 版本是否同时匹配两个 JSON 文件。

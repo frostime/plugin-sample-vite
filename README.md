@@ -96,7 +96,7 @@ conveniently. Unsupported languages do not need to be declared in the `displayNa
   "name": "plugin-sample-vite",
   "author": "frostime",
   "url": "https://github.com/frostime/plugin-sample-vite",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "minAppVersion": "3.8.0",
   "disabledInPublish": true,
   "backends": ["windows", "linux", "darwin"],
@@ -224,8 +224,8 @@ The included workflow checks, packages, and publishes a GitHub release automatic
 2. Update the versions in `package.json` and `plugin.json`, then push a matching tag:
 
     ```bash
-    git tag v0.4.1
-    git push origin v0.4.1
+    git tag v0.5.0
+    git push origin v0.5.0
     ```
 
     The workflow verifies that the tag version matches both JSON files before checking, building, or publishing.

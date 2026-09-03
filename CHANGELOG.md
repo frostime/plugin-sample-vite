@@ -1,10 +1,13 @@
 # Changelog
 
-## Unreleased
+## v0.5.0 2026-09-03
 
-* Sync the Vite-only template with current SiYuan metadata and BCP 47 language tags.
-* Update the kernel API helpers to expose response status and current file-tree/blob operations.
-* Refresh the Vite toolchain, reproducible packaging, release checks, and SiYuan-aware live reload.
+* Sync the Vite-only template with current SiYuan metadata: BCP 47 language tags, `icon` / `preview` / `funding` fields, and `minAppVersion` 3.8.0.
+* Update the kernel API helpers to the `ApiResponse { ok, raw, data }` form and add the newer file-tree, by-ID, blob, and export APIs. Breaking: callers that consumed raw kernel data must check `response.ok` first.
+* Refresh the toolchain: Vite 8, TypeScript 6, SiYuan 1.2.5, Node 24, pnpm 11, with a committed lockfile and `pnpm install --frozen-lockfile`.
+* SiYuan-aware live reload in `pnpm dev`: reload only this plugin via `/api/petal/setPetalEnabled`; builds degrade to "no live reload" when the port is taken.
+* Release workflow validates the tag version against `package.json` and `plugin.json` before building.
+* README catch-up with upstream: live reload usage, marketplace image rules, the `all`-mixing prohibition, and the v0.5.0 baseline.
 
 ## v0.3.5 2024-04-30
 

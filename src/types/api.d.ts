@@ -1,3 +1,8 @@
+interface IDocTreeNode {
+    id: BlockId;
+    children?: IDocTreeNode[];
+}
+
 interface IResGetNotebookConf {
     box: string;
     conf: NotebookConf;
@@ -62,4 +67,3 @@ interface IResForwardProxy {
 interface IResExportResources {
     path: string;
 }
-

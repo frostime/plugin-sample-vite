@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+* Sync the Vite-only template with current SiYuan metadata and BCP 47 language tags.
+* Update the kernel API helpers to expose response status and current file-tree/blob operations.
+* Refresh the Vite toolchain, reproducible packaging, release checks, and SiYuan-aware live reload.
+
 ## v0.3.5 2024-04-30
 
 * [Add `direction` to plugin method `Setting.addItem`](https://github.com/siyuan-note/siyuan/issues/11183)

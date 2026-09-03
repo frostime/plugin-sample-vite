@@ -18,19 +18,17 @@ import {
     lockScreen,
     ICard,
     ICardData,
-    Custom,
     exitSiYuan,
     getModelByDockType,
     getAllEditor,
     Files,
-    platformUtils,
     fetchPost,
     openSetting,
     openAttributePanel,
-    saveLayout
+    saveLayout,
+    IMenuItem
 } from "siyuan";
 import "./index.scss";
-import { IMenuItem } from "siyuan/types";
 
 
 import { SettingUtils } from "./libs/setting-utils";
@@ -40,7 +38,6 @@ const DOCK_TYPE = "dock_tab";
 
 export default class PluginSample extends Plugin {
 
-    private custom: () => Custom;
     private isMobile: boolean;
     private blockIconEventBindThis = this.blockIconEvent.bind(this);
     private settingUtils: SettingUtils;
@@ -76,7 +73,7 @@ export default class PluginSample extends Plugin {
 <path d="M20 13.333c0-0.733 0.6-1.333 1.333-1.333s1.333 0.6 1.333 1.333c0 0.733-0.6 1.333-1.333 1.333s-1.333-0.6-1.333-1.333zM10.667 12h6.667v-2.667h-6.667v2.667zM29.333 10v9.293l-3.76 1.253-2.24 7.453h-7.333v-2.667h-2.667v2.667h-7.333c0 0-3.333-11.28-3.333-15.333s3.28-7.333 7.333-7.333h6.667c1.213-1.613 3.147-2.667 5.333-2.667 1.107 0 2 0.893 2 2 0 0.28-0.053 0.533-0.16 0.773-0.187 0.453-0.347 0.973-0.427 1.533l3.027 3.027h2.893zM26.667 12.667h-1.333l-4.667-4.667c0-0.867 0.12-1.72 0.347-2.547-1.293 0.333-2.347 1.293-2.787 2.547h-8.227c-2.573 0-4.667 2.093-4.667 4.667 0 2.507 1.627 8.867 2.68 12.667h2.653v-2.667h8v2.667h2.68l2.067-6.867 3.253-1.093v-4.707z"></path>
 </symbol>`);
 
-        this.custom = this.addTab({
+        this.addTab({
             type: TAB_TYPE,
             init() {
                 this.element.innerHTML = `<div class="plugin-sample__custom-tab">${this.data.text}</div>`;
@@ -105,6 +102,7 @@ export default class PluginSample extends Plugin {
             },
         });
 
+        const isMobile = this.isMobile;
         this.addDock({
             config: {
                 position: "LeftBottom",
@@ -123,28 +121,28 @@ export default class PluginSample extends Plugin {
             update() {
                 console.log(DOCK_TYPE + " update");
             },
-            init: (dock) => {
-                if (this.isMobile) {
-                    dock.element.innerHTML = `<div class="toolbar toolbar--border toolbar--dark">
+            init() {
+                if (isMobile) {
+                    this.element.innerHTML = `<div class="toolbar toolbar--border toolbar--dark">
                     <svg class="toolbar__icon"><use xlink:href="#iconEmoji"></use></svg>
                         <div class="toolbar__text">Custom Dock</div>
                     </div>
                     <div class="fn__flex-1 plugin-sample__custom-dock">
-                        ${dock.data.text}
+                        ${this.data.text}
                     </div>
                     </div>`;
                 } else {
-                    dock.element.innerHTML = `<div class="fn__flex-1 fn__flex-column">
+                    this.element.innerHTML = `<div class="fn__flex-1 fn__flex-column">
                     <div class="block__icons">
                         <div class="block__logo">
                             <svg class="block__logoicon"><use xlink:href="#iconEmoji"></use></svg>
                             Custom Dock
                         </div>
                         <span class="fn__flex-1 fn__space"></span>
-                        <span data-type="min" class="block__icon b3-tooltips b3-tooltips__sw" aria-label="Min ${adaptHotkey("⌘W")}"><svg class="block__logoicon"><use xlink:href="#iconMin"></use></svg></span>
+                        <span data-type="min" class="block__icon ariaLabel" data-position="north" aria-label="Min ${adaptHotkey("⌘W")}"><svg><use xlink:href="#iconMin"></use></svg></span>
                     </div>
                     <div class="fn__flex-1 plugin-sample__custom-dock">
-                        ${dock.data.text}
+                        ${this.data.text}
                     </div>
                     </div>`;
                 }
@@ -283,11 +281,9 @@ export default class PluginSample extends Plugin {
             description: this.i18n.hintDesc,
         });
 
-        try {
-            this.settingUtils.load();
-        } catch (error) {
-            console.error("Error loading settings storage, probably empty config json:", error);
-        }
+        this.settingUtils.load().catch(error => {
+            console.error("Error loading settings storage:", error);
+        });
 
 
         this.protyleSlash = [{
@@ -357,6 +353,9 @@ export default class PluginSample extends Plugin {
                 this.removeData(STORAGE_NAME).then(() => {
                     this.data[STORAGE_NAME] = { readonlyText: "Readonly" };
                     showMessage(`[${this.name}]: ${this.i18n.removedData}`);
+                }).catch(error => {
+                    showMessage(`[${this.name}] remove data [${STORAGE_NAME}] failed`);
+                    console.error(error);
                 });
             });
         });
@@ -364,7 +363,9 @@ export default class PluginSample extends Plugin {
             element: statusIconTemp.content.firstElementChild as HTMLElement,
         });
         // this.loadData(STORAGE_NAME);
-        this.settingUtils.load();
+        this.settingUtils.load().catch(error => {
+            console.error(`[${this.name}] load settings [${STORAGE_NAME}] failed:`, error);
+        });
         console.log(`frontend: ${getFrontend()}; backend: ${getBackend()}`);
         console.log(
             "Official settings value calling example:\n" +
@@ -380,8 +381,12 @@ export default class PluginSample extends Plugin {
         console.log("onunload");
     }
 
-    uninstall() {
+    async uninstall() {
         console.log("uninstall");
+        await this.removeData(STORAGE_NAME).catch(error => {
+            showMessage(`uninstall [${this.name}] remove data [${STORAGE_NAME}] failed`);
+            console.error(error);
+        });
     }
 
     async updateCards(options: ICardData) {

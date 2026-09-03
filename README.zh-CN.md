@@ -1,10 +1,10 @@
 
-# 使用 vite + svelte 的思源笔记插件示例
+# 使用 vite 的思源笔记插件示例
 
 [English](./README.md)
 
 
-> 本例同 [siyuan/plugin-sample](https://github.com/siyuan-note/plugin-sample) [v0.4.1](https://github.com/siyuan-note/plugin-sample/tree/v0.4.1)
+> 本例基于 [siyuan/plugin-sample](https://github.com/siyuan-note/plugin-sample) [v0.5.0](https://github.com/siyuan-note/plugin-sample/tree/v0.5.0)，并同步了后续版本中的部分更新。
  
 1. 使用 vite 打包
 2. 使用符号链接、而不是把项目放到插件目录下的模式进行开发
@@ -15,17 +15,23 @@
 1. 通过 <kbd>Use this template</kbd> 按钮将该库文件复制到你自己的库中，请注意库名和插件名称一致，默认分支必须为 `main`
 2. 将你的库克隆到本地开发文件夹中
     * 注意: 同 `plugin-sample` 不同, 本样例并不推荐直接把代码下载到 `{workspace}/data/plugins/`
-3. 安装 [NodeJS](https://nodejs.org/en/download) 和 [pnpm](https://pnpm.io/installation)，然后在开发文件夹下执行 `pnpm i` 安装所需要的依赖
+3. 安装 Node.js 24 或更高版本以及 pnpm 11.4，然后在开发文件夹下执行 `pnpm i` 安装依赖
 4. 运行 `pnpm run make-link` 命令创建符号链接 (Windows 下的开发者请参阅下方「Windows 下的 make-link」小节)
-5. 执行 `pnpm run dev` 进行实时编译
+5. 执行 `pnpm run dev` 进行实时编译。开发模式下，生成的 app bundle 会连接本地 LiveReload 服务，并请求当前 SiYuan 窗口只重载本插件。
+
+   默认 debounce 为 300 毫秒，关闭插件到重新启用之间默认等待 500 毫秒。可以在启动开发服务前调整：
+
+   ```powershell
+   $env:SIYUAN_LIVERELOAD_PORT = "35740"
+   $env:SIYUAN_LIVERELOAD_DEBOUNCE_MS = "300"
+   $env:SIYUAN_PLUGIN_RELOAD_GAP_MS = "500"
+   $env:SIYUAN_LIVERELOAD_MESSAGE = "当前检查项目已经存在"
+   pnpm run dev
+   ```
+
+   如果端口已被占用（例如基于本模板的另一个插件项目也在运行 `pnpm run dev`），构建会照常进行、只是没有自动重载；需要时把 `SIYUAN_LIVERELOAD_PORT` 换成空闲端口即可。
 6.  在思源中打开集市并在下载选项卡中启用插件
 
-> [!TIP]
-> 你也可以使用我们维护的 [siyuan-plugin-cli](https://www.npmjs.com/package/siyuan-plugin-cli) 命令行工具，在本地终端中直接构建插件。
-> 
-> 此外，对于本插件以下提及到的 `make-link` 相关的命令，后续所有更新将在 [siyuan-plugin-cli](https://www.npmjs.com/package/siyuan-plugin-cli) 中进行。
-> 
-> 模板内置的 `make-link` 脚本也可能会在未来某个版本中移除，转而使用 `siyuan-plugin-cli` 工具，意在简化同时维护多个插件模板的工作量。
 
 ### 设置 make-link 命令的目标目录
 
@@ -73,17 +79,16 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
 
 国际化方面我们主要考虑的是支持多语言，具体需要完成以下工作：
 
-* 插件自身的元信息，比如插件描述和自述文件
-  * plugin.json 中的 `description` 和 `readme` 字段，以及对应的 README*.md 文件
+* 插件自身的元信息，比如插件名称、描述和自述文件
+  * plugin.json 中的 `displayName`、`description` 和 `readme` 字段，以及对应的 README*.md 文件
 * 插件中使用的文本，比如按钮文字和提示信息
   * public/i18n/*.json 语言配置文件
   * 代码中使用 `this.i18.key` 获取文本
-* 最后在 plugin.json 中的 `i18n` 字段中声明该插件支持的语言
 * yaml 支持
-  * 本模板特别支持基于 Yaml 语法的 I18n，见 `public/i18n/zh_CN.yaml`
+  * 本模板特别支持基于 Yaml 语法的 I18n，见 `public/i18n/zh-CN.yaml`
   * 编译时，会自动把定义的 yaml 文件翻译成 json 文件放到 dist 或 dev 目录下
 
-建议插件至少支持英文和简体中文，这样可以方便更多人使用。
+建议插件至少支持英文和简体中文，这样可以方便更多人使用。不支持的语种不需要在 plugin.json 中的 `displayName`、`description` 和 `readme` 字段中声明。
 
 ## plugin.json
 
@@ -92,22 +97,25 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
   "name": "plugin-sample-vite",
   "author": "frostime",
   "url": "https://github.com/frostime/plugin-sample-vite",
-  "version": "0.1.3",
-  "minAppVersion": "2.8.8",
+  "version": "0.4.1",
+  "minAppVersion": "3.8.0",
+  "disabledInPublish": true,
   "backends": ["windows", "linux", "darwin"],
   "frontends": ["desktop"],
   "displayName": {
-    "en_US": "Plugin sample with vite and svelte",
-    "zh_CN": "插件样例 vite + svelte 版"
+    "default": "Plugin sample with vite",
+    "zh-CN": "插件样例 vite 版"
   },
   "description": {
-    "en_US": "SiYuan plugin sample with vite and svelte",
-    "zh_CN": "使用 vite 和 svelte 开发的思源插件样例"
+    "default": "SiYuan plugin sample with vite",
+    "zh-CN": "使用 vite 开发的思源插件样例"
   },
   "readme": {
-    "en_US": "README_en_US.md",
-    "zh_CN": "README.md"
+    "default": "README.md",
+    "zh-CN": "README.zh-CN.md"
   },
+  "icon": "icon.png",
+  "preview": "preview.png",
   "funding": {
     "openCollective": "",
     "patreon": "",
@@ -117,7 +125,7 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
     ]
   },
   "keywords": [
-    "sample", "示例"
+    "plugin", "sample", "插件样例"
   ]
 }
 ```
@@ -127,6 +135,7 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
 * `url`：插件仓库地址
 * `version`：插件版本号，建议遵循 [semver](https://semver.org/lang/zh-CN/) 规范
 * `minAppVersion`：插件支持的最低思源笔记版本号
+* `disabledInPublish`：如果模板不应发布到集市，设置为 `true`
 * `backends`：插件需要的后端环境，可选值为 `windows`, `linux`, `darwin`, `docker`, `android`, `ios` and `all`
   * `windows`：Windows 桌面端
   * `linux`：Linux 桌面端
@@ -142,20 +151,26 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
   * `browser-desktop`：桌面端浏览器
   * `browser-mobile`：移动端浏览器
   * `all`：所有环境
-* `displayName`：模板显示名称，主要用于模板集市列表中显示，支持多语言
+* `backends`、`frontends` 中若使用 `all`，不得与具体平台取值混用——要么只写 `["all"]`，要么写明确的平台列表。集市自动化检查会拒绝混用列表（官方示例模板仓库仅为展示用途豁免）。
+* `displayName`：插件名称（纯文本），在插件集市列表中显示，支持多语言
   * `default`：默认语言，必须存在
-  * `zh_CN`、`en_US` 等其他语言：可选，建议至少提供中文和英文
-* `description`：插件描述，主要用于插件集市列表中显示，支持多语言
+  * `zh-CN`、`en` 等其他语言：可选，须为 [BCP 47](https://tools.ietf.org/html/bcp47) 标签（如 `zh-CN`、`zh-TW`、`en`、`ja`、`pt-BR`）
+* `description`：插件描述（纯文本），在插件集市列表中显示，支持多语言
   * `default`：默认语言，必须存在
-  * `zh_CN`、`en_US` 等其他语言：可选，建议至少提供中文和英文
+  * `zh-CN`、`en` 等其他语言：可选，须为 BCP 47 标签
 * `readme`：自述文件名，主要用于插件集市详情页中显示，支持多语言
   * `default`：默认语言，必须存在
-  * `zh_CN`、`en_US` 等其他语言：可选，建议至少提供中文和英文
+  * `zh-CN`、`en` 等其他语言：可选，须为 BCP 47 标签
+  * 相对图片存在于 `package.zip` 时从本地加载，否则在线集市会回退到对应的 GitHub Release；如需离线显示，请将图片打入 `package.zip`
+* `icon`：可选的集市图标文件名，图片必须位于包根目录；支持 PNG、JPEG、WebP 和 AVIF，最大 64 KiB，建议尺寸为 160*160
+* `preview`：可选的集市预览图文件名，图片必须位于包根目录；支持 PNG、JPEG、WebP 和 AVIF，最大 512 KiB，建议尺寸为 1024*768
+  * 不支持 SVG。不需要图片时，请删除对应字段及传统文件 `icon.png` 或 `preview.png`，字段值不能为空字符串
 * `funding`：插件赞助信息
   * `openCollective`：Open Collective 名称
   * `patreon`：Patreon 名称
   * `github`：GitHub 登录名
   * `custom`：自定义赞助链接列表
+  * `links`：带标签的自定义赞助链接列表，例如 `{"label": "赞助", "url": "https://example.com"}`
 * `keywords`：搜索关键字列表，用于集市搜索功能
 
 ## 打包
@@ -163,12 +178,12 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
 无论使用何种方式编译打包，我们最终需要生成一个 package.zip，它至少包含如下文件：
 
 * i18n/*
-* icon.png (160*160)
+* `icon` 和 `preview` 字段声明的图片（可选）
 * index.css
 * index.js
 * plugin.json
-* preview.png (1024*768)
 * README*.md
+* asset/*（离线显示 README 所需的图片）
 
 ## 上架集市
 
@@ -196,27 +211,36 @@ PR 社区集市仓库。
 
 ## 使用 Github action 自动发布
 
-样例中自带了 github action，可以自动打包发布，请遵循以下操作：
+样例中自带的 workflow 会自动检查、打包并发布 GitHub Release：
 
-1. 设置项目 `https://github.com/OWNER/REPO/settings/actions` 页面向下划到 **Workflow Permissions**，打开配置
+1. 在仓库中打开 `Settings` > `Actions` > `General`，在 **Workflow permissions** 下选择 **Read and write permissions**。
 
     ![](asset/action.png)
 
-2. 需要发布版本的时候，push 一个格式为 `v*` 的 tag，github 就会自动打包发布 release（包括 package.zip）
+2. 更新 `package.json` 和 `plugin.json` 中的版本号，然后推送匹配的 tag：
 
-3. 默认使用保守策略进行 pre-release 发布，如果觉得没有必要，可以更改 release.yml 中的设置：
-
-    ```yaml
-    - name: Release
-        uses: ncipollo/release-action@v1
-        with:
-            allowUpdates: true
-            artifactErrorsFailBuild: true
-            artifacts: 'package.zip'
-            token: ${{ secrets.GITHUB_TOKEN }}
-            prerelease: true # 把这个改为 false
+    ```bash
+    git tag v0.4.1
+    git push origin v0.4.1
     ```
 
+    workflow 会在检查、构建和发布前验证 tag 版本是否同时匹配两个 JSON 文件。
+
+3. workflow 默认创建正式 Release；需要预发布版本时，将 `.github/workflows/release.yml` 中的 `prerelease` 改为 `true`。
+
+
+## 思源 API helper
+
+`src/api.ts` 中大多数函数返回 `ApiResponse` 对象，而不是直接返回内核数据：
+
+```ts
+const response = await sql("select * from blocks");
+if (response.ok) {
+  console.log(response.data);
+}
+```
+
+读取 `response.data` 前请先检查 `response.ok`；`response.raw` 保存原始的内核响应。
 
 ## 开发者须知
 

@@ -1,7 +1,7 @@
 
 # SiYuan plugin sample with vite
 
-[中文版](./README_zh_CN.md)
+[中文版](./README.zh-CN.md)
 
 > Consistent with [siyuan/plugin-sample](https://github.com/siyuan-note/plugin-sample) [v0.4.1](https://github.com/siyuan-note/plugin-sample/tree/v0.4.1)
 
@@ -45,7 +45,7 @@ The `make-link` command creates a symbolic link that binds your `dev` directory 
         [1] H:\临时文件夹\SiYuanDevSpace
         Please select a workspace[0-1]: 0
         Got target directory: H:\Media\SiYuan/data/plugins
-        Done! Created symlink H:\Media\SiYuan/data/plugins/plugin-sample-vite-svelte
+        Done! Created symlink H:\Media\SiYuan/data/plugins/plugin-sample-vite
         ```
 2. **Manually Configure Target Directory**
     - Open the `./scripts/make_dev_link.js` file, change `targetDir` to the SiYuan plugin directory `<siyuan workspace>/data/plugins`.
@@ -77,7 +77,7 @@ complete the following tasks:
     * public/i18n/*.json language configuration files
     * Use `this.i18.key` to get the text in the code
 * YAML Support
-  * This template specifically supports I18n based on YAML syntax, see `public/i18n/zh_CN.yaml`
+  * This template specifically supports I18n based on YAML syntax, see `public/i18n/zh-CN.yaml`
   * During compilation, the defined YAML files will be automatically translated into JSON files and placed in the dist or dev directory.
 
 It is recommended that the plugin supports at least English and Simplified Chinese, so that more people can use it more
@@ -87,25 +87,28 @@ conveniently.
 
 ```json
 {
-  "name": "plugin-sample-vite-svelte",
+  "name": "plugin-sample-vite",
   "author": "frostime",
-  "url": "https://github.com/siyuan-note/plugin-sample-vite-svelte",
-  "version": "0.1.3",
-  "minAppVersion": "2.8.8",
+  "url": "https://github.com/frostime/plugin-sample-vite",
+  "version": "0.4.1",
+  "minAppVersion": "3.7.0",
+  "disabledInPublish": true,
   "backends": ["windows", "linux", "darwin"],
   "frontends": ["desktop"],
   "displayName": {
-    "en_US": "Plugin sample with vite and svelte",
-    "zh_CN": "插件样例 vite + svelte 版"
+    "default": "Plugin sample with vite",
+    "zh-CN": "插件样例 vite 版"
   },
   "description": {
-    "en_US": "SiYuan plugin sample with vite and svelte",
-    "zh_CN": "使用 vite 和 svelte 开发的思源插件样例"
+    "default": "SiYuan plugin sample with vite",
+    "zh-CN": "使用 vite 开发的思源插件样例"
   },
   "readme": {
-    "en_US": "README_en_US.md",
-    "zh_CN": "README.md"
+    "default": "README.md",
+    "zh-CN": "README.zh-CN.md"
   },
+  "icon": "icon.png",
+  "preview": "preview.png",
   "funding": {
     "openCollective": "",
     "patreon": "",
@@ -115,7 +118,7 @@ conveniently.
     ]
   },
   "keywords": [
-    "sample", "示例"
+    "plugin", "sample", "插件样例"
   ]
 }
 ```
@@ -143,18 +146,23 @@ conveniently.
   * `all`: All environments
 * `displayName`: Template display name, mainly used for display in the marketplace list, supports multiple languages
     * `default`: Default language, must exist
-    * `zh_CN`, `en_US` and other languages: optional, it is recommended to provide at least Chinese and English
+    * `zh-CN`, `en` and other languages: optional, must be BCP 47 tags
 * `description`: Plugin description, mainly used for display in the marketplace list, supports multiple languages
     * `default`: Default language, must exist
-    * `zh_CN`, `en_US` and other languages: optional, it is recommended to provide at least Chinese and English
+    * `zh-CN`, `en` and other languages: optional, must be BCP 47 tags
 * `readme`: readme file name, mainly used to display in the marketplace details page, supports multiple languages
     * `default`: Default language, must exist
-    * `zh_CN`, `en_US` and other languages: optional, it is recommended to provide at least Chinese and English
+    * `zh-CN`, `en` and other languages: optional, must be BCP 47 tags
+    * Relative images are loaded from `package.zip` when present; include them in the package for offline use
+* `icon`: Optional marketplace icon filename at the package root. The recommended size is 160*160
+* `preview`: Optional marketplace preview filename at the package root. The recommended size is 1024*768
+    * SVG is unsupported; remove the field and legacy file when no image is needed
 * `funding`: Plugin sponsorship information
     * `openCollective`: Open Collective name
     * `patreon`: Patreon name
     * `github`: GitHub login name
     * `custom`: Custom sponsorship link list
+    * `links`: Labeled custom sponsorship links
 * `keywords`: Search keyword list, used for marketplace search function
 
 ## Package
@@ -163,12 +171,12 @@ No matter which method is used to compile and package, we finally need to genera
 least the following files:
 
 * i18n/*
-* icon.png (160*160)
+* Image files declared by `icon` and `preview` (optional)
 * index.css
 * index.js
 * plugin.json
-* preview.png (1024*768)
 * README*.md
+* asset/* (README images required offline)
 
 ## List on the marketplace
 
@@ -199,26 +207,22 @@ and you can check the deployment status at https://github.com/siyuan-note/bazaar
 
 ## Use Github Action
 
-The github action is included in this sample, you can use it to publish your new realse to marketplace automatically:
+The included workflow checks, packages, and publishes a GitHub release automatically:
 
-1. In your repo setting page `https://github.com/OWNER/REPO/settings/actions`, down to **Workflow Permissions** and open the configuration like this:
+1. In `Settings` > `Actions` > `General`, select **Read and write permissions** under **Workflow permissions**.
 
     ![](asset/action.png)
 
-2. Push a tag in the format `v*` and github will automatically create a new release with new bulit package.zip
+2. Update the versions in `package.json` and `plugin.json`, then push a matching tag:
 
-3. By default, it will only publish a pre-release, if you don't think this is necessary, change the settings in release.yml
-
-    ```yaml
-    - name: Release
-        uses: ncipollo/release-action@v1
-        with.
-            allowUpdates: true
-            artifactErrorsFailBuild: true
-            artifacts: 'package.zip'
-            token: ${{ secrets.GITHUB_TOKEN }}
-            prerelease: true # change this to false
+    ```bash
+    git tag v0.4.1
+    git push origin v0.4.1
     ```
+
+    The workflow verifies that the tag version matches both JSON files before checking, building, or publishing.
+
+3. The workflow creates a regular release by default. Set `prerelease: true` in `.github/workflows/release.yml` when needed.
 
 ## Developer's Guide
 

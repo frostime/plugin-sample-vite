@@ -141,7 +141,7 @@ export default class PluginSample extends Plugin {
                             Custom Dock
                         </div>
                         <span class="fn__flex-1 fn__space"></span>
-                        <span data-type="min" class="block__icon b3-tooltips b3-tooltips__sw" aria-label="Min ${adaptHotkey("⌘W")}"><svg class="block__logoicon"><use xlink:href="#iconMin"></use></svg></span>
+                        <span data-type="min" class="block__icon ariaLabel" data-position="north" aria-label="Min ${adaptHotkey("⌘W")}"><svg><use xlink:href="#iconMin"></use></svg></span>
                     </div>
                     <div class="fn__flex-1 plugin-sample__custom-dock">
                         ${dock.data.text}
@@ -283,11 +283,9 @@ export default class PluginSample extends Plugin {
             description: this.i18n.hintDesc,
         });
 
-        try {
-            this.settingUtils.load();
-        } catch (error) {
-            console.error("Error loading settings storage, probably empty config json:", error);
-        }
+        this.settingUtils.load().catch(error => {
+            console.error("Error loading settings storage:", error);
+        });
 
 
         this.protyleSlash = [{
@@ -357,6 +355,9 @@ export default class PluginSample extends Plugin {
                 this.removeData(STORAGE_NAME).then(() => {
                     this.data[STORAGE_NAME] = { readonlyText: "Readonly" };
                     showMessage(`[${this.name}]: ${this.i18n.removedData}`);
+                }).catch(error => {
+                    showMessage(`[${this.name}] remove data [${STORAGE_NAME}] failed`);
+                    console.error(error);
                 });
             });
         });
@@ -364,7 +365,9 @@ export default class PluginSample extends Plugin {
             element: statusIconTemp.content.firstElementChild as HTMLElement,
         });
         // this.loadData(STORAGE_NAME);
-        this.settingUtils.load();
+        this.settingUtils.load().catch(error => {
+            console.error(`[${this.name}] load settings [${STORAGE_NAME}] failed:`, error);
+        });
         console.log(`frontend: ${getFrontend()}; backend: ${getBackend()}`);
         console.log(
             "Official settings value calling example:\n" +
@@ -380,8 +383,12 @@ export default class PluginSample extends Plugin {
         console.log("onunload");
     }
 
-    uninstall() {
+    async uninstall() {
         console.log("uninstall");
+        await this.removeData(STORAGE_NAME).catch(error => {
+            showMessage(`uninstall [${this.name}] remove data [${STORAGE_NAME}] failed`);
+            console.error(error);
+        });
     }
 
     async updateCards(options: ICardData) {

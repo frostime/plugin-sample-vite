@@ -65,6 +65,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
+          replacesArtifacts: true
           artifactErrorsFailBuild: true
           artifacts: "package.zip"
           token: ${{ secrets.GITHUB_TOKEN }}

@@ -3,7 +3,7 @@
 
 [中文版](./README.zh-CN.md)
 
-> Consistent with [siyuan/plugin-sample](https://github.com/siyuan-note/plugin-sample) [v0.4.1](https://github.com/siyuan-note/plugin-sample/tree/v0.4.1)
+> Based on [siyuan/plugin-sample](https://github.com/siyuan-note/plugin-sample) [v0.5.0](https://github.com/siyuan-note/plugin-sample/tree/v0.5.0), with selected updates from newer releases.
 
 
 1. Using vite for packaging
@@ -15,17 +15,23 @@
 1. Use the <kbd>Use this template</kbd> button to make a copy of this repo as a template. Note that the repository name should match the plugin name, and the default branch must be `main`.
 2. Clone your repository to the local development folder.
     * Note: Unlike `plugin-sample`, this example does not recommend directly downloading the code to `{workspace}/data/plugins/`.
-3. Install [NodeJS](https://nodejs.org/en/download) and [pnpm](https://pnpm.io/installation), then run `pnpm i` in the development folder to install the required dependencies.
+3. Install Node.js 24 or later and pnpm 11.4, then run `pnpm i` in the development folder to install the required dependencies.
 4. Run the `pnpm run make-link` command to create a symbolic link (Windows developers, please refer to the "make-link on Windows" section below).
-5. Execute `pnpm run dev` for real-time compilation.
+5. Execute `pnpm run dev` for real-time compilation. In development mode, the generated app bundle connects to the local LiveReload server and asks the current SiYuan window to reload this plugin only.
+
+   The default LiveReload debounce is 300 ms and the default delay between disabling and re-enabling the plugin is 500 ms. You can customize them before starting development:
+
+   ```powershell
+   $env:SIYUAN_LIVERELOAD_PORT = "35740"
+   $env:SIYUAN_LIVERELOAD_DEBOUNCE_MS = "300"
+   $env:SIYUAN_PLUGIN_RELOAD_GAP_MS = "500"
+   $env:SIYUAN_LIVERELOAD_MESSAGE = "Current check item already exists"
+   pnpm run dev
+   ```
+
+   If the port is already in use — for example, another plugin project copied from this template is also running `pnpm run dev` — the build continues without live reload; set `SIYUAN_LIVERELOAD_PORT` to a free port if you need it.
 6. Open the marketplace in SiYuan and enable the plugin in the download tab.
 
-> [!TIP]
-> You can also use our maintained [siyuan-plugin-cli](https://www.npmjs.com/package/siyuan-plugin-cli) command-line tool to directly build plugins in your local terminal.
->
-> Additionally, for the `make-link` related commands mentioned in this plugin, all future updates will be made in [siyuan-plugin-cli](https://www.npmjs.com/package/siyuan-plugin-cli).
->
-> The built-in `make-link` scripts may also be removed in a future version, in favor of using the `siyuan-plugin-cli` tool, aiming to simplify the workload of maintaining multiple plugin templates.
 
 ### Setting the Target Directory for the make-link Command
 
@@ -71,8 +77,8 @@ However, creating directory symbolic links on Windows using NodeJs may require a
 In terms of internationalization, our main consideration is to support multiple languages. Specifically, we need to
 complete the following tasks:
 
-* Meta information about the plugin itself, such as plugin description and readme
-    * `description` and `readme` fields in plugin.json, and the corresponding README*.md file
+* Meta information about the plugin itself, such as plugin display name, description and readme
+    * `displayName`, `description` and `readme` fields in plugin.json, and the corresponding README*.md file
 * Text used in the plugin, such as button text and tooltips
     * public/i18n/*.json language configuration files
     * Use `this.i18.key` to get the text in the code
@@ -81,7 +87,7 @@ complete the following tasks:
   * During compilation, the defined YAML files will be automatically translated into JSON files and placed in the dist or dev directory.
 
 It is recommended that the plugin supports at least English and Simplified Chinese, so that more people can use it more
-conveniently.
+conveniently. Unsupported languages do not need to be declared in the `displayName`, `description` and `readme` fields in plugin.json.
 
 ## plugin.json
 
@@ -146,25 +152,25 @@ conveniently.
   * `browser-mobile`: Mobile browser
   * `all`: All environments
 * When `all` appears in `backends` or `frontends`, it must not be mixed with concrete platform values: write `["all"]` alone, or an explicit platform list. The marketplace automated check rejects mixed lists (the official sample template repos are exempted for demonstration purposes).
-* `displayName`: Template display name, mainly used for display in the marketplace list, supports multiple languages
+* `displayName`: Plugin name (plain text), displayed in the marketplace list, supports multiple languages
     * `default`: Default language, must exist
-    * `zh-CN`, `en` and other languages: optional, must be BCP 47 tags
-* `description`: Plugin description, mainly used for display in the marketplace list, supports multiple languages
+    * `zh-CN`, `en` and other languages: optional, must be [BCP 47](https://tools.ietf.org/html/bcp47) tags (e.g. `zh-CN`, `zh-TW`, `en`, `ja`, `pt-BR`)
+* `description`: Plugin description (plain text), displayed in the marketplace list, supports multiple languages
     * `default`: Default language, must exist
     * `zh-CN`, `en` and other languages: optional, must be BCP 47 tags
 * `readme`: readme file name, mainly used to display in the marketplace details page, supports multiple languages
     * `default`: Default language, must exist
     * `zh-CN`, `en` and other languages: optional, must be BCP 47 tags
-    * Relative images are loaded from `package.zip` when present; include them in the package for offline use
-* `icon`: Optional marketplace icon filename at the package root. The recommended size is 160*160
-* `preview`: Optional marketplace preview filename at the package root. The recommended size is 1024*768
-    * SVG is unsupported; remove the field and legacy file when no image is needed
+    * Relative images are loaded from `package.zip` when present; otherwise the online marketplace falls back to the matching GitHub Release. Include them in `package.zip` for offline use
+* `icon`: Optional marketplace icon filename at the package root. Supports PNG, JPEG, WebP, and AVIF up to 64 KiB; the recommended size is 160*160
+* `preview`: Optional marketplace preview filename at the package root. Supports PNG, JPEG, WebP, and AVIF up to 512 KiB; the recommended size is 1024*768
+    * SVG is unsupported. To omit an image, remove its field and the legacy `icon.png` or `preview.png`; an empty field value is invalid
 * `funding`: Plugin sponsorship information
     * `openCollective`: Open Collective name
     * `patreon`: Patreon name
     * `github`: GitHub login name
     * `custom`: Custom sponsorship link list
-    * `links`: Labeled custom sponsorship links
+    * `links`: Labeled custom sponsorship links, for example `{"label": "Sponsor", "url": "https://example.com"}`
 * `keywords`: Search keyword list, used for marketplace search function
 
 ## Package

@@ -4,7 +4,7 @@
 [English](./README.md)
 
 
-> 本例同 [siyuan/plugin-sample](https://github.com/siyuan-note/plugin-sample) [v0.4.1](https://github.com/siyuan-note/plugin-sample/tree/v0.4.1)
+> 本例基于 [siyuan/plugin-sample](https://github.com/siyuan-note/plugin-sample) [v0.5.0](https://github.com/siyuan-note/plugin-sample/tree/v0.5.0)，并同步了后续版本中的部分更新。
  
 1. 使用 vite 打包
 2. 使用符号链接、而不是把项目放到插件目录下的模式进行开发
@@ -15,17 +15,23 @@
 1. 通过 <kbd>Use this template</kbd> 按钮将该库文件复制到你自己的库中，请注意库名和插件名称一致，默认分支必须为 `main`
 2. 将你的库克隆到本地开发文件夹中
     * 注意: 同 `plugin-sample` 不同, 本样例并不推荐直接把代码下载到 `{workspace}/data/plugins/`
-3. 安装 [NodeJS](https://nodejs.org/en/download) 和 [pnpm](https://pnpm.io/installation)，然后在开发文件夹下执行 `pnpm i` 安装所需要的依赖
+3. 安装 Node.js 24 或更高版本以及 pnpm 11.4，然后在开发文件夹下执行 `pnpm i` 安装依赖
 4. 运行 `pnpm run make-link` 命令创建符号链接 (Windows 下的开发者请参阅下方「Windows 下的 make-link」小节)
-5. 执行 `pnpm run dev` 进行实时编译
+5. 执行 `pnpm run dev` 进行实时编译。开发模式下，生成的 app bundle 会连接本地 LiveReload 服务，并请求当前 SiYuan 窗口只重载本插件。
+
+   默认 debounce 为 300 毫秒，关闭插件到重新启用之间默认等待 500 毫秒。可以在启动开发服务前调整：
+
+   ```powershell
+   $env:SIYUAN_LIVERELOAD_PORT = "35740"
+   $env:SIYUAN_LIVERELOAD_DEBOUNCE_MS = "300"
+   $env:SIYUAN_PLUGIN_RELOAD_GAP_MS = "500"
+   $env:SIYUAN_LIVERELOAD_MESSAGE = "当前检查项目已经存在"
+   pnpm run dev
+   ```
+
+   如果端口已被占用（例如基于本模板的另一个插件项目也在运行 `pnpm run dev`），构建会照常进行、只是没有自动重载；需要时把 `SIYUAN_LIVERELOAD_PORT` 换成空闲端口即可。
 6.  在思源中打开集市并在下载选项卡中启用插件
 
-> [!TIP]
-> 你也可以使用我们维护的 [siyuan-plugin-cli](https://www.npmjs.com/package/siyuan-plugin-cli) 命令行工具，在本地终端中直接构建插件。
-> 
-> 此外，对于本插件以下提及到的 `make-link` 相关的命令，后续所有更新将在 [siyuan-plugin-cli](https://www.npmjs.com/package/siyuan-plugin-cli) 中进行。
-> 
-> 模板内置的 `make-link` 脚本也可能会在未来某个版本中移除，转而使用 `siyuan-plugin-cli` 工具，意在简化同时维护多个插件模板的工作量。
 
 ### 设置 make-link 命令的目标目录
 
@@ -73,17 +79,16 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
 
 国际化方面我们主要考虑的是支持多语言，具体需要完成以下工作：
 
-* 插件自身的元信息，比如插件描述和自述文件
-  * plugin.json 中的 `description` 和 `readme` 字段，以及对应的 README*.md 文件
+* 插件自身的元信息，比如插件名称、描述和自述文件
+  * plugin.json 中的 `displayName`、`description` 和 `readme` 字段，以及对应的 README*.md 文件
 * 插件中使用的文本，比如按钮文字和提示信息
   * public/i18n/*.json 语言配置文件
   * 代码中使用 `this.i18.key` 获取文本
-* 最后在 plugin.json 中的 `i18n` 字段中声明该插件支持的语言
 * yaml 支持
   * 本模板特别支持基于 Yaml 语法的 I18n，见 `public/i18n/zh-CN.yaml`
   * 编译时，会自动把定义的 yaml 文件翻译成 json 文件放到 dist 或 dev 目录下
 
-建议插件至少支持英文和简体中文，这样可以方便更多人使用。
+建议插件至少支持英文和简体中文，这样可以方便更多人使用。不支持的语种不需要在 plugin.json 中的 `displayName`、`description` 和 `readme` 字段中声明。
 
 ## plugin.json
 
@@ -147,25 +152,25 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
   * `browser-mobile`：移动端浏览器
   * `all`：所有环境
 * `backends`、`frontends` 中若使用 `all`，不得与具体平台取值混用——要么只写 `["all"]`，要么写明确的平台列表。集市自动化检查会拒绝混用列表（官方示例模板仓库仅为展示用途豁免）。
-* `displayName`：模板显示名称，主要用于模板集市列表中显示，支持多语言
+* `displayName`：插件名称（纯文本），在插件集市列表中显示，支持多语言
   * `default`：默认语言，必须存在
-  * `zh-CN`、`en` 等其他语言：可选，须为 BCP 47 标签
-* `description`：插件描述，主要用于插件集市列表中显示，支持多语言
+  * `zh-CN`、`en` 等其他语言：可选，须为 [BCP 47](https://tools.ietf.org/html/bcp47) 标签（如 `zh-CN`、`zh-TW`、`en`、`ja`、`pt-BR`）
+* `description`：插件描述（纯文本），在插件集市列表中显示，支持多语言
   * `default`：默认语言，必须存在
   * `zh-CN`、`en` 等其他语言：可选，须为 BCP 47 标签
 * `readme`：自述文件名，主要用于插件集市详情页中显示，支持多语言
   * `default`：默认语言，必须存在
   * `zh-CN`、`en` 等其他语言：可选，须为 BCP 47 标签
-  * 相对图片在 `package.zip` 中存在时从本地加载；如需离线显示，请将图片打入安装包
-* `icon`：可选的集市图标文件名，图片必须位于包根目录，建议尺寸为 160*160
-* `preview`：可选的集市预览图文件名，图片必须位于包根目录，建议尺寸为 1024*768
-  * 不支持 SVG；不需要图片时，请删除对应字段及传统图片文件
+  * 相对图片存在于 `package.zip` 时从本地加载，否则在线集市会回退到对应的 GitHub Release；如需离线显示，请将图片打入 `package.zip`
+* `icon`：可选的集市图标文件名，图片必须位于包根目录；支持 PNG、JPEG、WebP 和 AVIF，最大 64 KiB，建议尺寸为 160*160
+* `preview`：可选的集市预览图文件名，图片必须位于包根目录；支持 PNG、JPEG、WebP 和 AVIF，最大 512 KiB，建议尺寸为 1024*768
+  * 不支持 SVG。不需要图片时，请删除对应字段及传统文件 `icon.png` 或 `preview.png`，字段值不能为空字符串
 * `funding`：插件赞助信息
   * `openCollective`：Open Collective 名称
   * `patreon`：Patreon 名称
   * `github`：GitHub 登录名
   * `custom`：自定义赞助链接列表
-  * `links`：带标签的自定义赞助链接列表
+  * `links`：带标签的自定义赞助链接列表，例如 `{"label": "赞助", "url": "https://example.com"}`
 * `keywords`：搜索关键字列表，用于集市搜索功能
 
 ## 打包

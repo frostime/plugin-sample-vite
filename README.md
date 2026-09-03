@@ -129,6 +129,7 @@ conveniently.
 * `url`: Plugin repo URL
 * `version`: Plugin version number, it is recommended to follow the [semver](https://semver.org/) specification
 * `minAppVersion`: Minimum version number of SiYuan required to use this plugin
+* `disabledInPublish`: Set to `true` when this template should not be published to the marketplace
 * `backends`: Backend environment required by the plugin, optional values are `windows`, `linux`, `darwin`, `docker`, `android`, `ios` and `all`
   * `windows`: Windows desktop
   * `linux`: Linux desktop
@@ -223,6 +224,19 @@ The included workflow checks, packages, and publishes a GitHub release automatic
     The workflow verifies that the tag version matches both JSON files before checking, building, or publishing.
 
 3. The workflow creates a regular release by default. Set `prerelease: true` in `.github/workflows/release.yml` when needed.
+
+## SiYuan API helper
+
+Most functions in `src/api.ts` return an `ApiResponse` object instead of returning the kernel data directly:
+
+```ts
+const response = await sql("select * from blocks");
+if (response.ok) {
+  console.log(response.data);
+}
+```
+
+Use `response.ok` before reading `response.data`; `response.raw` contains the original kernel response.
 
 ## Developer's Guide
 

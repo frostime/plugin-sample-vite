@@ -130,6 +130,7 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
 * `url`：插件仓库地址
 * `version`：插件版本号，建议遵循 [semver](https://semver.org/lang/zh-CN/) 规范
 * `minAppVersion`：插件支持的最低思源笔记版本号
+* `disabledInPublish`：如果模板不应发布到集市，设置为 `true`
 * `backends`：插件需要的后端环境，可选值为 `windows`, `linux`, `darwin`, `docker`, `android`, `ios` and `all`
   * `windows`：Windows 桌面端
   * `linux`：Linux 桌面端
@@ -221,6 +222,19 @@ PR 社区集市仓库。
 
 3. workflow 默认创建正式 Release；需要预发布版本时，将 `.github/workflows/release.yml` 中的 `prerelease` 改为 `true`。
 
+
+## 思源 API helper
+
+`src/api.ts` 中大多数函数返回 `ApiResponse` 对象，而不是直接返回内核数据：
+
+```ts
+const response = await sql("select * from blocks");
+if (response.ok) {
+  console.log(response.data);
+}
+```
+
+读取 `response.data` 前请先检查 `response.ok`；`response.raw` 保存原始的内核响应。
 
 ## 开发者须知
 

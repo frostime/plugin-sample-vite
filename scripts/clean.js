@@ -17,6 +17,6 @@ function removePath(path) {
     unlinkSync(path);
 }
 
-for (const path of ["dist", "package.zip"]) {
+for (const path of ["dist", "dev", "package.zip"]) {
     removePath(path);
 }

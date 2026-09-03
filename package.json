@@ -12,7 +12,7 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "dev": "cross-env NODE_ENV=development VITE_SOURCEMAP=inline vite build --watch",
+    "dev": "pnpm run clean && cross-env NODE_ENV=development VITE_SOURCEMAP=inline vite build --watch",
     "check": "pnpm run check:types",
     "check:types": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "clean": "node ./scripts/clean.js",

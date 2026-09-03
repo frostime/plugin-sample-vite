@@ -145,6 +145,7 @@ conveniently.
   * `browser-desktop`: Desktop browser
   * `browser-mobile`: Mobile browser
   * `all`: All environments
+* When `all` appears in `backends` or `frontends`, it must not be mixed with concrete platform values: write `["all"]` alone, or an explicit platform list. The marketplace automated check rejects mixed lists (the official sample template repos are exempted for demonstration purposes).
 * `displayName`: Template display name, mainly used for display in the marketplace list, supports multiple languages
     * `default`: Default language, must exist
     * `zh-CN`, `en` and other languages: optional, must be BCP 47 tags

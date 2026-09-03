@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { createServer as createNetServer } from "node:net";
 import { resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
@@ -106,29 +107,61 @@ export default defineConfig({
     }
 });
 
+let liveReloadActive = false;
+
+/**
+ * Probe the exact address the live reload server will bind (IPv4 loopback,
+ * same as the client's ws://127.0.0.1 target) so a busy port degrades the
+ * build to "no live reload" instead of crashing it — e.g. another plugin
+ * project's dev session already holds the default port. Binding `::` would
+ * succeed even when 127.0.0.1 is taken on Windows, hiding the conflict.
+ */
+function isPortFree(port: number): Promise<boolean> {
+    return new Promise((resolve) => {
+        const probe = createNetServer();
+        probe.once("error", () => resolve(false));
+        probe.listen(port, "127.0.0.1", () => probe.close(() => resolve(true)));
+    });
+}
+
 function liveReloadServer(): Plugin {
     let server: ReturnType<typeof createLiveReloadServer> | undefined;
 
     return {
         name: "siyuan-live-reload-server",
-        buildStart() {
+        async buildStart() {
             if (server) {
                 return;
             }
 
+            if (!(await isPortFree(liveReloadPort))) {
+                console.warn(
+                    `[live-reload] port ${liveReloadPort} is already in use, building without live reload. ` +
+                    "Set SIYUAN_LIVERELOAD_PORT to a free port if you need it."
+                );
+                liveReloadActive = false;
+                return;
+            }
+
+            // livereload@0.9 ignores a host option and binds all interfaces;
+            // reachability is governed by the probe above and the client's
+            // ws://127.0.0.1 target.
             server = createLiveReloadServer({
                 port: liveReloadPort,
                 delay: liveReloadDebounceMs
             });
             server.on("error", (error) => {
-                console.error(`[live-reload] unable to listen on port ${liveReloadPort}:`, error);
-                throw error;
+                console.error(`[live-reload] server error, live reload disabled:`, error);
+                server = undefined;
+                liveReloadActive = false;
             });
             server.watch(resolve(import.meta.dirname, outputDir));
+            liveReloadActive = true;
         },
         closeWatcher() {
             server?.close();
             server = undefined;
+            liveReloadActive = false;
         }
     };
 }
@@ -136,14 +169,16 @@ function liveReloadServer(): Plugin {
 function siYuanPluginReload(): Plugin {
     return {
         name: "siyuan-plugin-reload",
-        banner: () => createSiYuanLiveReloadScript({
+        // Skip the client script when no server is running, so the plugin does
+        // not try to connect to a dead port on every page load.
+        banner: () => liveReloadActive ? createSiYuanLiveReloadScript({
             port: liveReloadPort,
             pluginName: pluginManifest.name,
             frontend: liveReloadFrontend,
             message: liveReloadMessage,
             debounceMs: liveReloadDebounceMs,
             reloadGapMs: pluginReloadGapMs
-        })
+        }) : ""
     };
 }
 

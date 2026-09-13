@@ -19,7 +19,7 @@
 4. Run the `pnpm run make-link` command to create a symbolic link (Windows developers, please refer to the "make-link on Windows" section below).
 5. Execute `pnpm run dev` for real-time compilation. In development mode, the generated app bundle connects to the local LiveReload server and asks the current SiYuan window to reload this plugin only.
 
-   The default LiveReload debounce is 300 ms and the default delay between disabling and re-enabling the plugin is 500 ms. You can customize them before starting development:
+   The default LiveReload port is derived from the plugin name, so separate projects normally get different ports. Set `SIYUAN_LIVERELOAD_PORT` when you need a fixed port. The default debounce is 300 ms and the default delay between disabling and re-enabling the plugin is 500 ms. You can customize them before starting development:
 
    ```powershell
    $env:SIYUAN_LIVERELOAD_PORT = "35740"
@@ -29,7 +29,7 @@
    pnpm run dev
    ```
 
-   If the port is already in use — for example, another plugin project copied from this template is also running `pnpm run dev` — the build continues without live reload; set `SIYUAN_LIVERELOAD_PORT` to a free port if you need it.
+   If the port is already in use — for example, another plugin project copied from this template is also running `pnpm run dev` — the build continues without live reload. The embedded client also verifies the server identity before reacting to reload events, preventing one plugin from responding to another plugin's LiveReload server. Set `SIYUAN_LIVERELOAD_PORT` to a free port if you need live reload.
 6. Open the marketplace in SiYuan and enable the plugin in the download tab.
 
 
@@ -81,7 +81,7 @@ complete the following tasks:
     * `displayName`, `description` and `readme` fields in plugin.json, and the corresponding README*.md file
 * Text used in the plugin, such as button text and tooltips
     * public/i18n/*.json language configuration files
-    * Use `this.i18.key` to get the text in the code
+    * Use `this.i18n.key` to get the text in the code
 * YAML Support
   * This template specifically supports I18n based on YAML syntax, see `public/i18n/zh-CN.yaml`
   * During compilation, the defined YAML files will be automatically translated into JSON files and placed in the dist or dev directory.
@@ -136,13 +136,14 @@ conveniently. Unsupported languages do not need to be declared in the `displayNa
 * `version`: Plugin version number, it is recommended to follow the [semver](https://semver.org/) specification
 * `minAppVersion`: Minimum version number of SiYuan required to use this plugin
 * `disabledInPublish`: Set to `true` when this template should not be published to the marketplace
-* `backends`: Backend environment required by the plugin, optional values are `windows`, `linux`, `darwin`, `docker`, `android`, `ios` and `all`
+* `backends`: Backend environment required by the plugin, optional values are `windows`, `linux`, `darwin`, `docker`, `android`, `ios`, `harmony` and `all`
   * `windows`: Windows desktop
   * `linux`: Linux desktop
   * `darwin`: macOS desktop
   * `docker`: Docker
   * `android`: Android APP
   * `ios`: iOS APP
+  * `harmony`: HarmonyOS APP
   * `all`: All environments
 * `frontends`: Frontend environment required by the plugin, optional values are `desktop`, `desktop-window`, `mobile`, `browser-desktop`, `browser-mobile` and `all`
   * `desktop`: Desktop
@@ -194,24 +195,9 @@ least the following files:
 * Upload the file package.zip as binary attachments
 * Publish the release
 
-If it is the first release, please create a pull request to
-the [Community Bazaar](https://github.com/siyuan-note/bazaar) repository and modify the plugins.json file in it. This
-file is the index of all community plugin repositories, the format is:
+For the first release, fork the [Community Bazaar](https://github.com/siyuan-note/bazaar), add one `owner/repo` line to `plugins.txt` in its root, and open a PR against `main`. Use one repository per line without commas or empty lines, and add only one new package per PR. See [Submitting a bazaar package](https://github.com/siyuan-note/bazaar#submitting-a-bazaar-package) for the full process and review rules.
 
-```json
-{
-  "repos": [
-    "username/reponame"
-  ]
-}
-```
-
-After the PR is merged, the bazaar will automatically update the index and deploy through GitHub Actions. When releasing
-a new version of the plugin in the future, you only need to follow the above steps to create a new release, and you
-don't need to PR the community bazaar repo.
-
-Under normal circumstances, the community bazaar repo will automatically update the index and deploy every hour,
-and you can check the deployment status at https://github.com/siyuan-note/bazaar/actions.
+After the PR is merged, the bazaar updates its index automatically. For subsequent updates, increase `version` in the package manifest and publish a regular GitHub Release containing `package.zip`; no additional listing PR is needed. See [Updating a bazaar package](https://github.com/siyuan-note/bazaar#updating-a-bazaar-package) for update timing and troubleshooting, and check deployment status in the [Stage workflow](https://github.com/siyuan-note/bazaar/actions/workflows/stage.yml).
 
 ## Use Github Action
 

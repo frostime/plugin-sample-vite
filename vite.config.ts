@@ -8,7 +8,7 @@ import zipPack from "vite-plugin-zip-pack";
 import fg from "fast-glob";
 
 import vitePluginYamlI18n from "./yaml-plugin.js";
-import { createSiYuanLiveReloadScript, readPluginManifest } from "./scripts/siyuan_live_reload.js";
+import { createSiYuanLiveReloadScript, deriveLiveReloadPort, readPluginManifest } from "./scripts/siyuan_live_reload.js";
 
 const env = process.env;
 const isSrcmap = env.VITE_SOURCEMAP === "inline";
@@ -25,7 +25,10 @@ const packageImageTargets = [
     return fileName ? [{ src: `./${fileName}`, dest: "./" }] : [];
 });
 
-const liveReloadPort = Number.parseInt(env.SIYUAN_LIVERELOAD_PORT || "35740", 10);
+const liveReloadPort = Number.parseInt(
+    env.SIYUAN_LIVERELOAD_PORT || String(deriveLiveReloadPort(pluginManifest.name)),
+    10
+);
 const liveReloadFrontend = env.SIYUAN_LIVERELOAD_FRONTEND || "desktop";
 const liveReloadMessage = env.SIYUAN_LIVERELOAD_MESSAGE || `Live reload: ${pluginManifest.name}`;
 const liveReloadDebounceMs = Number.parseInt(env.SIYUAN_LIVERELOAD_DEBOUNCE_MS || "300", 10);
@@ -155,6 +158,12 @@ function liveReloadServer(): Plugin {
                 server = undefined;
                 liveReloadActive = false;
             });
+            server.server.on("connection", (socket) => {
+                socket.send(JSON.stringify({
+                    command: "plugin-identity",
+                    plugin: pluginManifest.name
+                }));
+            });
             server.watch(resolve(import.meta.dirname, outputDir));
             liveReloadActive = true;
         },
@@ -162,6 +171,13 @@ function liveReloadServer(): Plugin {
             server?.close();
             server = undefined;
             liveReloadActive = false;
+        },
+        closeBundle() {
+            if (!this.meta.watchMode) {
+                server?.close();
+                server = undefined;
+                liveReloadActive = false;
+            }
         }
     };
 }

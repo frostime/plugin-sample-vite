@@ -19,7 +19,7 @@
 4. 运行 `pnpm run make-link` 命令创建符号链接 (Windows 下的开发者请参阅下方「Windows 下的 make-link」小节)
 5. 执行 `pnpm run dev` 进行实时编译。开发模式下，生成的 app bundle 会连接本地 LiveReload 服务，并请求当前 SiYuan 窗口只重载本插件。
 
-   默认 debounce 为 300 毫秒，关闭插件到重新启用之间默认等待 500 毫秒。可以在启动开发服务前调整：
+   LiveReload 默认端口会根据插件名称稳定计算，因此不同项目通常会使用不同端口。需要固定端口时，可以设置 `SIYUAN_LIVERELOAD_PORT`。默认 debounce 为 300 毫秒，关闭插件到重新启用之间默认等待 500 毫秒。可以在启动开发服务前调整：
 
    ```powershell
    $env:SIYUAN_LIVERELOAD_PORT = "35740"
@@ -29,7 +29,7 @@
    pnpm run dev
    ```
 
-   如果端口已被占用（例如基于本模板的另一个插件项目也在运行 `pnpm run dev`），构建会照常进行、只是没有自动重载；需要时把 `SIYUAN_LIVERELOAD_PORT` 换成空闲端口即可。
+   如果端口已被占用（例如基于本模板的另一个插件项目也在运行 `pnpm run dev`），构建会照常进行、只是没有自动重载。注入 bundle 的客户端还会先校验 LiveReload 服务身份，避免一个插件响应另一个插件的 LiveReload 服务；需要时把 `SIYUAN_LIVERELOAD_PORT` 换成空闲端口即可。
 6.  在思源中打开集市并在下载选项卡中启用插件
 
 
@@ -83,7 +83,7 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
   * plugin.json 中的 `displayName`、`description` 和 `readme` 字段，以及对应的 README*.md 文件
 * 插件中使用的文本，比如按钮文字和提示信息
   * public/i18n/*.json 语言配置文件
-  * 代码中使用 `this.i18.key` 获取文本
+  * 代码中使用 `this.i18n.key` 获取文本
 * yaml 支持
   * 本模板特别支持基于 Yaml 语法的 I18n，见 `public/i18n/zh-CN.yaml`
   * 编译时，会自动把定义的 yaml 文件翻译成 json 文件放到 dist 或 dev 目录下
@@ -136,13 +136,14 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
 * `version`：插件版本号，建议遵循 [semver](https://semver.org/lang/zh-CN/) 规范
 * `minAppVersion`：插件支持的最低思源笔记版本号
 * `disabledInPublish`：如果模板不应发布到集市，设置为 `true`
-* `backends`：插件需要的后端环境，可选值为 `windows`, `linux`, `darwin`, `docker`, `android`, `ios` and `all`
+* `backends`：插件需要的后端环境，可选值为 `windows`, `linux`, `darwin`, `docker`, `android`, `ios`, `harmony` 和 `all`
   * `windows`：Windows 桌面端
   * `linux`：Linux 桌面端
   * `darwin`：macOS 桌面端
   * `docker`：Docker 端
   * `android`：Android 端
   * `ios`：iOS 端
+  * `harmony`：鸿蒙端
   * `all`：所有环境
 * `frontends`：插件需要的前端环境，可选值为 `desktop`, `desktop-window`, `mobile`, `browser-desktop`, `browser-mobile` and `all`
   * `desktop`：桌面端
@@ -193,21 +194,9 @@ make-link 命令会创建符号链接将你的 `dev` 目录绑定到思源的插
 * 上传 package.zip 作为二进制附件
 * 提交发布
 
-如果是第一次发布版本，还需要创建一个 PR 到 [Community Bazaar](https://github.com/siyuan-note/bazaar) 社区集市仓库，修改该库的
-plugins.json。该文件是所有社区插件库的索引，格式为：
+首次发布时，请 Fork [社区集市仓库](https://github.com/siyuan-note/bazaar)，在根目录的 `plugins.txt` 中新增一行 `owner/repo`，然后向 `main` 分支提交 PR。每行一个仓库，不添加逗号或空行；每个新增包 PR 只添加一个包。完整流程和审核规则请参阅[提交集市包](https://github.com/siyuan-note/bazaar/blob/main/README.zh-CN.md#提交集市包)。
 
-```json
-{
-  "repos": [
-    "username/reponame"
-  ]
-}
-```
-
-PR 被合并以后集市会通过 GitHub Actions 自动更新索引并部署。后续发布新版本插件时只需要按照上述步骤创建新的发布即可，不需要再
-PR 社区集市仓库。
-
-正常情况下，社区集市仓库每隔 1 小时会自动更新索引并部署，可在 https://github.com/siyuan-note/bazaar/actions 查看部署状态。
+PR 合并后，集市会自动更新索引。后续更新只需提升清单中的 `version` 并发布包含 `package.zip` 的正式 GitHub Release，无需再次提交上架 PR。更新时效和排错方法请参阅[更新集市包](https://github.com/siyuan-note/bazaar/blob/main/README.zh-CN.md#更新集市包)，部署状态可在 [Stage 工作流](https://github.com/siyuan-note/bazaar/actions/workflows/stage.yml) 查看。
 
 ## 使用 Github action 自动发布
 

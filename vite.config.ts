@@ -1,20 +1,18 @@
-import { existsSync } from "node:fs";
-import { createServer as createNetServer } from "node:net";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
-import { createServer as createLiveReloadServer } from "livereload";
 import zipPack from "vite-plugin-zip-pack";
 import fg from "fast-glob";
 
 import vitePluginYamlI18n from "./yaml-plugin.js";
-import { createSiYuanLiveReloadScript, deriveLiveReloadPort, readPluginManifest } from "./scripts/siyuan_live_reload.js";
+import { useLiveReload } from "./scripts/siyuan_live_reload.js";
 
 const env = process.env;
 const isSrcmap = env.VITE_SOURCEMAP === "inline";
 const isDev = env.NODE_ENV === "development";
 const outputDir = isDev ? "dev" : "dist";
-const pluginManifest = readPluginManifest();
+const pluginManifest = JSON.parse(readFileSync(resolve(import.meta.dirname, "plugin.json"), "utf8"));
 
 const packageImageTargets = [
     ["icon", "icon.png"],
@@ -24,15 +22,6 @@ const packageImageTargets = [
     const fileName = manifestFileName || (existsSync(legacyName) ? legacyName : "");
     return fileName ? [{ src: `./${fileName}`, dest: "./" }] : [];
 });
-
-const liveReloadPort = Number.parseInt(
-    env.SIYUAN_LIVERELOAD_PORT || String(deriveLiveReloadPort(pluginManifest.name)),
-    10
-);
-const liveReloadFrontend = env.SIYUAN_LIVERELOAD_FRONTEND || "desktop";
-const liveReloadMessage = env.SIYUAN_LIVERELOAD_MESSAGE || `Live reload: ${pluginManifest.name}`;
-const liveReloadDebounceMs = Number.parseInt(env.SIYUAN_LIVERELOAD_DEBOUNCE_MS || "300", 10);
-const pluginReloadGapMs = Number.parseInt(env.SIYUAN_PLUGIN_RELOAD_GAP_MS || "500", 10);
 
 console.log("isDev=>", isDev);
 console.log("isSrcmap=>", isSrcmap);
@@ -80,8 +69,7 @@ export default defineConfig({
         },
         rollupOptions: {
             plugins: isDev ? [
-                liveReloadServer(),
-                siYuanPluginReload(),
+                useLiveReload({ outputDir }),
                 watchExternalFiles([
                     "public/i18n/**",
                     "./README*.md",
@@ -109,94 +97,6 @@ export default defineConfig({
         },
     }
 });
-
-let liveReloadActive = false;
-
-/**
- * Probe the exact address the live reload server will bind (IPv4 loopback,
- * same as the client's ws://127.0.0.1 target) so a busy port degrades the
- * build to "no live reload" instead of crashing it — e.g. another plugin
- * project's dev session already holds the default port. Binding `::` would
- * succeed even when 127.0.0.1 is taken on Windows, hiding the conflict.
- */
-function isPortFree(port: number): Promise<boolean> {
-    return new Promise((resolve) => {
-        const probe = createNetServer();
-        probe.once("error", () => resolve(false));
-        probe.listen(port, "127.0.0.1", () => probe.close(() => resolve(true)));
-    });
-}
-
-function liveReloadServer(): Plugin {
-    let server: ReturnType<typeof createLiveReloadServer> | undefined;
-
-    return {
-        name: "siyuan-live-reload-server",
-        async buildStart() {
-            if (server) {
-                return;
-            }
-
-            if (!(await isPortFree(liveReloadPort))) {
-                console.warn(
-                    `[live-reload] port ${liveReloadPort} is already in use, building without live reload. ` +
-                    "Set SIYUAN_LIVERELOAD_PORT to a free port if you need it."
-                );
-                liveReloadActive = false;
-                return;
-            }
-
-            // livereload@0.9 ignores a host option and binds all interfaces;
-            // reachability is governed by the probe above and the client's
-            // ws://127.0.0.1 target.
-            server = createLiveReloadServer({
-                port: liveReloadPort,
-                delay: liveReloadDebounceMs
-            });
-            server.on("error", (error) => {
-                console.error(`[live-reload] server error, live reload disabled:`, error);
-                server = undefined;
-                liveReloadActive = false;
-            });
-            server.server.on("connection", (socket) => {
-                socket.send(JSON.stringify({
-                    command: "plugin-identity",
-                    plugin: pluginManifest.name
-                }));
-            });
-            server.watch(resolve(import.meta.dirname, outputDir));
-            liveReloadActive = true;
-        },
-        closeWatcher() {
-            server?.close();
-            server = undefined;
-            liveReloadActive = false;
-        },
-        closeBundle() {
-            if (!this.meta.watchMode) {
-                server?.close();
-                server = undefined;
-                liveReloadActive = false;
-            }
-        }
-    };
-}
-
-function siYuanPluginReload(): Plugin {
-    return {
-        name: "siyuan-plugin-reload",
-        // Skip the client script when no server is running, so the plugin does
-        // not try to connect to a dead port on every page load.
-        banner: () => liveReloadActive ? createSiYuanLiveReloadScript({
-            port: liveReloadPort,
-            pluginName: pluginManifest.name,
-            frontend: liveReloadFrontend,
-            message: liveReloadMessage,
-            debounceMs: liveReloadDebounceMs,
-            reloadGapMs: pluginReloadGapMs
-        }) : ""
-    };
-}
 
 function watchExternalFiles(patterns: string[]): Plugin {
     return {

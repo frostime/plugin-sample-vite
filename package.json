@@ -1,6 +1,6 @@
 {
   "name": "plugin-sample-vite",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "type": "module",
   "description": "This is a sample plugin based on vite for Siyuan (https://b3log.org/siyuan)",
   "repository": "https://github.com/frostime/plugin-sample-vite",
@@ -24,6 +24,7 @@
     "update-version": "node --no-warnings ./scripts/update_version.js"
   },
   "devDependencies": {
+    "@types/livereload": "^0.9.5",
     "@types/node": "^26.4.0",
     "cross-env": "^10.1.0",
     "fast-glob": "^3.3.3",

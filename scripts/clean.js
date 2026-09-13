@@ -17,6 +17,7 @@ function removePath(path) {
     unlinkSync(path);
 }
 
-for (const path of ["dist", "dev", "package.zip"]) {
+// dev will be symlinked to siyuan workspace, so by default not removed
+for (const path of ["dist", "package.zip"]) {
     removePath(path);
 }

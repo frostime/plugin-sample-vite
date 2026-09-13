@@ -17,19 +17,21 @@
     * 注意: 同 `plugin-sample` 不同, 本样例并不推荐直接把代码下载到 `{workspace}/data/plugins/`
 3. 安装 Node.js 24 或更高版本以及 pnpm 11.4，然后在开发文件夹下执行 `pnpm i` 安装依赖
 4. 运行 `pnpm run make-link` 命令创建符号链接 (Windows 下的开发者请参阅下方「Windows 下的 make-link」小节)
-5. 执行 `pnpm run dev` 进行实时编译。开发模式下，生成的 app bundle 会连接本地 LiveReload 服务，并请求当前 SiYuan 窗口只重载本插件。
+5. 执行 `pnpm run dev` 进行实时编译。开发模式下，LiveReload 会在本地监听一个 WebSocket 端口，插件 bundle 中注入的客户端则从思源内部连接该端口。请尽量让这个端口稳定对应当前插件，尤其是在同时开发多个插件时。
 
-   LiveReload 默认端口会根据插件名称稳定计算，因此不同项目通常会使用不同端口。需要固定端口时，可以设置 `SIYUAN_LIVERELOAD_PORT`。默认 debounce 为 300 毫秒，关闭插件到重新启用之间默认等待 500 毫秒。可以在启动开发服务前调整：
+   如果没有设置 `port`，LiveReload 会根据插件名称自动派生一个稳定的默认端口。如果该端口已被占用或与其他插件冲突，请在 `vite.config.ts` 中手动指定专用于当前项目的开发端口，并在后续开发中保持不变。默认 debounce 为 5 秒，关闭插件到重新启用之间默认等待 500 毫秒。如需覆盖这些设置，请在 `vite.config.ts` 中向 `useLiveReload` 传入参数：
 
-   ```powershell
-   $env:SIYUAN_LIVERELOAD_PORT = "35740"
-   $env:SIYUAN_LIVERELOAD_DEBOUNCE_MS = "300"
-   $env:SIYUAN_PLUGIN_RELOAD_GAP_MS = "500"
-   $env:SIYUAN_LIVERELOAD_MESSAGE = "当前检查项目已经存在"
-   pnpm run dev
+   ```ts
+   useLiveReload({
+       outputDir,
+       port: 31416,
+       debounceMs: 300,
+       reloadGapMs: 500,
+       message: "正在重载我的插件"
+   })
    ```
 
-   如果端口已被占用（例如基于本模板的另一个插件项目也在运行 `pnpm run dev`），构建会照常进行、只是没有自动重载。注入 bundle 的客户端还会先校验 LiveReload 服务身份，避免一个插件响应另一个插件的 LiveReload 服务；需要时把 `SIYUAN_LIVERELOAD_PORT` 换成空闲端口即可。
+   LiveReload 还会在重载前校验插件身份，避免一个插件响应其他插件的 LiveReload 服务。
 6.  在思源中打开集市并在下载选项卡中启用插件
 
 
